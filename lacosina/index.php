@@ -1,2 +1,2 @@
 <?php
-echo 'hello-bis';
+echo 'hello';
