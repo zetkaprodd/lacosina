@@ -1,11 +1,9 @@
-version: '3.3'
-
 services:
   php:
     build:
       context: .
-      dockerfile: dockerfile
-    container_name: php82
+      dockerfile: Dockerfile
+    container_name: php82-prof
     depends_on:
       - db
     image: php:8.2-apache
@@ -14,7 +12,7 @@ services:
     ports:
       - 80:80
   db:
-    container_name: mysql8
+    container_name: mysql8-prof
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
@@ -26,7 +24,7 @@ services:
       - 3306:3306
   phpmya:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: phpmyadmin
+    container_name: phpmyadmin-prof
     environment:
       PMA_ARBITRARY: 1
       PMA_HOST: db
