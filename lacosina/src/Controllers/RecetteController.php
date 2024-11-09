@@ -2,118 +2,121 @@
 
 class RecetteController {
 
-    function ajouter(){
-        require_once(__DIR__.'/../Views/Recettes/ajout.php');
+    private PDO $pdo;
+
+    public function __construct() {
+        $this->pdo = new PDO('mysql:host=mysql8;dbname=lacosina', 'myuser', 'monpassword', [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
     }
 
-    function enregistrer(){
-        
+    function ajouter() {
+        require_once(__DIR__ . '/../Views/Recettes/ajout.php');
+    }
+
+    function enregistrer() {
         $titre = $_POST['titre'];
-        $description = $_POST['description'];
+        $description = $_POST['description'];  
         $auteur = $_POST['auteur'];
-        $image = $_POST['image'];
-
-        /** @var PDO $pdo **/
-        $pdo = new PDO('mysql:host=mysql8;dbname=lacosina', 'myuser', 'monpassword');
-
-        $requete = $pdo->prepare('INSERT INTO recettes (titre, description, auteur, date_creation, image) VALUES (:titre, :description, :auteur,  NOW(), :image)');
-        $requete->bindParam(':titre',$titre);
+        $image = $_FILES['image'];
+    
+        $imagePath = null;
+        
+        // Si une nouvelle image est téléchargée
+        if (!empty($image) && $image['error'] != 4) {
+            $tempName = $image['tmp_name'];
+    
+            if (is_uploaded_file($tempName)) {
+                // Déplacer l'image vers le répertoire de destination
+                $imageName = basename($image['name']); // On sécurise le nom de l'image
+                $uploadPath = __DIR__.'/../../upload/'.$imageName;
+                
+                // Supprimer l'ancienne image si elle existe déjà (dans la base de données)
+                $id = $_GET['id'];
+                if (isset($id)) {
+                    $recipeRequest = $this->pdo->prepare('SELECT image FROM recettes WHERE id = :id');
+                    $recipeRequest->bindParam(':id', $id);
+                    $recipeRequest->execute();
+                    $recipe = $recipeRequest->fetch(PDO::FETCH_ASSOC);
+                    
+                    // Si une ancienne image existe, on la supprime du serveur
+                    if ($recipe['image'] && file_exists(__DIR__.'/../../upload/'.$recipe['image'])) {
+                        unlink(__DIR__.'/../../upload/'.$recipe['image']);
+                    }
+                }
+                
+                // Déplacer la nouvelle image
+                if (!move_uploaded_file($tempName, $uploadPath)) {
+                    echo 'Erreur lors de l\'enregistrement de l\'image';
+                    exit;
+                } else {
+                    $imagePath = $imageName;  // Nouveau chemin de l'image
+                }
+            }
+        } else {
+            // Si aucune nouvelle image n'est téléchargée, récupérer l'ancienne image
+            $id = $_GET['id'];
+            if (isset($id)) {
+                $recipeRequest = $this->pdo->prepare('SELECT image FROM recettes WHERE id = :id');
+                $recipeRequest->bindParam(':id', $id);
+                $recipeRequest->execute();
+                $recipe = $recipeRequest->fetch(PDO::FETCH_ASSOC);
+                $imagePath = $recipe['image']; // Conserver l'ancienne image
+            }
+        }
+    
+        // Mise à jour ou insertion de la recette
+        if (isset($id)) {
+            $requete = $this->pdo->prepare('UPDATE recettes SET titre = :titre, description = :description, auteur = :auteur, image = :image WHERE id = :id');
+            $requete->bindParam(':id', $id);
+        } else {
+            // Si c'est une nouvelle recette
+            $requete = $this->pdo->prepare('INSERT INTO recettes (titre, description, auteur, image, date_creation) VALUES(:titre, :description, :auteur, :image, NOW())');
+        }
+    
+        // Bind des paramètres
+        $requete->bindParam(':titre', $titre);
         $requete->bindParam(':description', $description);
         $requete->bindParam(':auteur', $auteur);
-        $requete->bindParam(':image', $image);
-
+        $requete->bindParam(':image', $imagePath);
+    
+        // Exécution de la requête
         $ajoutOk = $requete->execute();
-
-        if($ajoutOk) {
-            require_once(__DIR__.'/../Views/Recettes/enregistrer.php');
+    
+        if ($ajoutOk) {
+            require_once(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'views'.DIRECTORY_SEPARATOR.'recettes'.DIRECTORY_SEPARATOR.'enregistrer.php');
         } else {
-            echo 'Erreur lors de l\'enregistrement de la recette.';
+            echo 'Erreur lors de l\'enregistrement de la recette';
         }
     }
     
-    function lister(){
+    
 
-        /** @var PDO $pdo */
-        $pdo = new PDO('mysql:host=mysql8;dbname=lacosina', 'myuser', 'monpassword');
-        
-        $requete = $pdo->prepare("SELECT * FROM recettes");
-
-        $requete->execute();
-        $recipes = $requete->fetchAll(PDO::FETCH_ASSOC);
-
-        require_once(__DIR__.'/../Views/Recettes/liste.php');
+    function lister() {
+        $requete = $this->pdo->query("SELECT * FROM recettes");
+        $recipes = $requete->fetchAll();
+        require_once(__DIR__ . '/../Views/Recettes/liste.php');
     }
 
-    function detail($pdo, $id){
+    function detail($id) {
+        $requete = $this->pdo->prepare("SELECT * FROM recettes WHERE id = :id");
+        $requete->execute([':id' => $id]);
+        $recipe = $requete->fetch();
 
-        /** @var PDO $pdo **/
-
-        $requete = $pdo->prepare("SELECT * FROM recettes WHERE id = :id");
-        $requete->bindParam(':id', $id);
-
-        $requete->execute();
-        $recipe = $requete->fetch(PDO::FETCH_ASSOC);
-
-        require_once(__DIR__.'/../Views/Recettes/detail.php');  
+        require_once(__DIR__ . '/../Views/Recettes/detail.php');
     }
 
-    function modifier($pdo) {
-        // Récupération de l'ID depuis l'URL
-        if (!isset($_GET['id'])) {
-            echo 'Erreur : ID non spécifié.';
+    function modifier($id) {
+        $requete = $this->pdo->prepare("SELECT * FROM recettes WHERE id = :id");
+        $requete->execute([':id' => $id]);
+        $recipe = $requete->fetch();
+
+        if (!$recipe) {
+            echo "Recette introuvable.";
             return;
         }
-        
-        $id = (int) $_GET['id']; // Sécurisation de l'ID en entier
 
-        // Vérification si le formulaire a été soumis
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Récupération des valeurs soumises dans le formulaire
-            $titre = $_POST['titre'] ?? null;
-            $description = $_POST['description'] ?? null;
-            $auteur = $_POST['auteur'] ?? null;
-
-            // Vérifier que les champs sont bien remplis
-            if (!$titre || !$description || !$auteur) {
-                echo 'Erreur : tous les champs doivent être remplis.';
-                return;
-            }
-
-            // Préparation et exécution de la requête de mise à jour
-            $requete = $pdo->prepare('
-                UPDATE recettes 
-                SET titre = :titre, description = :description, auteur = :auteur 
-                WHERE id = :id
-            ');
-            $requete->bindParam(':titre', $titre);
-            $requete->bindParam(':description', $description);
-            $requete->bindParam(':auteur', $auteur);
-            $requete->bindParam(':id', $id, PDO::PARAM_INT);
-
-            if ($requete->execute()) {
-                echo 'La recette a été modifiée avec succès.';
-                // Rediriger ou afficher un message de succès
-            } else {
-                echo 'Erreur lors de la modification de la recette.';
-            }
-        } else {
-            // Si le formulaire n'est pas soumis, récupérer les données de la recette existante
-            $requete = $pdo->prepare('SELECT * FROM recettes WHERE id = :id');
-            $requete->bindParam(':id', $id, PDO::PARAM_INT);
-            $requete->execute();
-            $recipe = $requete->fetch(PDO::FETCH_ASSOC);
-
-            if (!$recipe) {
-                echo 'Erreur : recette introuvable.';
-                return;
-            }
-
-            // Inclure le formulaire de modification avec les données actuelles
-            require_once(__DIR__.'/../Views/Recettes/modifier.php');
-        }
+        require_once(__DIR__ . '/../Views/Recettes/modif.php');
     }
 }
-    
-
-
-

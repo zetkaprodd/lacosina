@@ -35,7 +35,7 @@ if(isset($_GET['c'])) {
         case 'detail':
             if(isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $recetteController = new RecetteController();
-                $recetteController->detail($pdo, $_GET['id']);
+                $recetteController->detail($_GET['id']);
             } else {
                 echo "ID de recette invalide ou manquant.";
             }
@@ -43,12 +43,14 @@ if(isset($_GET['c'])) {
 
         case 'modif':
             if(isset($_GET['id']) && is_numeric($_GET['id'])) {
+                $id = $_GET['id']; 
                 $recetteController = new RecetteController();
-                $recetteController->modifier($pdo, $_GET['id']);
+                $recetteController->modifier($id);
             } else {
                 echo "ID de recette invalide ou manquant.";
             }
             break;
+
 
         default:
             require_once(__DIR__.'/src/Controllers/homeController.php');
