@@ -96,7 +96,7 @@ class UserController {
                 echo "Utilisateur non trouvé.";
             }
         } else {
-            header('Location: ?c=connexion');
+            require_once(__DIR__ . '/../Views/User/connexion.php');
             exit;
         }
     }
