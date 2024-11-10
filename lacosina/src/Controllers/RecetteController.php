@@ -90,8 +90,6 @@ class RecetteController {
             echo 'Erreur lors de l\'enregistrement de la recette';
         }
     }
-    
-    
 
     function lister() {
         $requete = $this->pdo->query("SELECT * FROM recettes");
