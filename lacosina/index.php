@@ -82,6 +82,13 @@ if(isset($_GET['c'])) {
             break;
         }
 
+        case "profil": {
+            $userController = new UserController($pdo);
+            $userController->profil();
+
+            break;
+        }
+            
 
 
         default:
