@@ -5,7 +5,7 @@
     </div>
     <div class="col">
         <p><b>Identifiant : </b> <span id="profil_identifiant" data-id="<?php echo $user['id']; ?>" contenteditable="true"> <?php echo $user['identifiant']; ?></span></p>
-        <p><b>Email : </b><span id="profil-mail" data-id="<?php echo $user['id']; ?>" contenteditable="true" ><?php echo $user['mail']; ?></span></p>
+        <p><b>Email : </b><span id="profil_mail" data-id="<?php echo $user['id']; ?>" contenteditable="true"> <?php echo $user['mail']; ?></span></p>
     </div>
 </div>
 <hr>
