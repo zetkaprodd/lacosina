@@ -1,9 +1,13 @@
 <?php
 
+session_start();
+
 require_once(__DIR__.'/src/Models/connectDb.php');
 require_once(__DIR__.'/src/Controllers/ContactController.php');
 require_once(__DIR__.'/src/Controllers/RecetteController.php');
+require_once(__DIR__.'/src/Controllers/UserController.php');
 require_once(__DIR__.'/src/Views/header.php');
+
 
 if(isset($_GET['c'])) {
     switch ($_GET['c']) {
@@ -51,11 +55,40 @@ if(isset($_GET['c'])) {
             }
             break;
 
+        case 'inscription':
+            $userController = new UserController();
+            $userController->inscription();
+            break;
+
+        case 'inscrire':
+            $userController = new UserController();
+            $userController->enregistrer();
+            break;
+
+        case 'connexion':
+            $userController = new UserController();
+            $userController->connexion();
+            break;
+        
+        case 'connecter':
+            $userController = new UserController();
+            $userController->verifieConnexion();
+            break;
+    
+        case "deconnexion": {
+            $userController = new UserController($pdo);
+            $userController->deconnexion();
+
+            break;
+        }
+
+
 
         default:
             require_once(__DIR__.'/src/Controllers/homeController.php');
             break;
     }
+
 } else {
     require_once(__DIR__.'/src/Controllers/homeController.php');
 }

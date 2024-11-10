@@ -30,5 +30,23 @@
             </li>
             
         </ul>
+
+        <?php if(isset($_SESSION['identifiant'])) { ?>
+
+            <li class="nav-item" style="list-style-type: none;" >
+                <a class="btn btn-outline-dark" href='?c=deconnexion'>Déconnexion</a>
+            </li>
+
+        <?php } else { ?>
+
+            <li class="nav-item" style="list-style-type: none; margin : 5px" >
+                <a class="btn btn-outline-dark" href='?c=inscription'>Inscription</a>
+            </li>
+            
+            <li class="nav-item" style="list-style-type: none;" >
+                <a class="btn btn-outline-dark" href='?c=connexion'>Connexion</a>
+            </li>
+        <?php } ?>
+
     </nav>
     <div class = "container w-75 m-auto">
