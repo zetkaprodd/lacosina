@@ -78,8 +78,27 @@ class UserController {
         require_once(__DIR__.'../../Views/home.php');
     }
 
-    function profil(){
-        require_once(__DIR__.'../../Views/User/profil.php');
+    function profil() {
+
+        if (isset($_SESSION['identifiant'])) {
+            $identifiant = $_SESSION['identifiant'];
+    
+            // Préparer la requête pour récupérer les informations de l'utilisateur depuis la base de données
+            $requete = $this->pdo->prepare('SELECT id, identifiant, mail FROM users WHERE identifiant = :identifiant');
+            $requete->bindParam(':identifiant', $identifiant);
+            $requete->execute();
+    
+            $user = $requete->fetch();
+    
+            if ($user) {
+                require_once(__DIR__ . '../../Views/User/profil.php');
+            } else {
+                echo "Utilisateur non trouvé.";
+            }
+        } else {
+            header('Location: ?c=connexion');
+            exit;
+        }
     }
 }
 ?>
